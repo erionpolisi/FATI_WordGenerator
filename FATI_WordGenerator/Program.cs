@@ -6,11 +6,14 @@ class Program
 {
     static void Main()
     {
-        string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-        string resourcesPath = Path.Combine(currentDir, "Resources");
+        string projectDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\");
 
-        string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
+        // Ressourcenpfad
+        string resourcesPath = Path.Combine(projectDir, "Resources");
         string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
+        string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
+
+        string currentDir = AppDomain.CurrentDomain.BaseDirectory;
         string folderPath = Path.Combine(currentDir, "Rechnungen");
 
         Directory.CreateDirectory(folderPath);
