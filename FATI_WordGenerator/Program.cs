@@ -6,10 +6,8 @@ class Program
 {
     static void Main()
     {
-        string projectDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\");
-
         // Ressourcenpfad
-        string resourcesPath = Path.Combine(projectDir, "Resources");
+        string resourcesPath = "C:\\Users\\polise\\source\\repos\\FATI_WordGenerator\\FATI_WordGenerator\\Resources";
         string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
         string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
 
