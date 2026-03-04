@@ -21,13 +21,23 @@ class Program
 
         var wsAdresse = workbook.Worksheet("Adresse");
         var wsPos = workbook.Worksheet("Positionen");
+        var wsFirma = workbook.Worksheet("Firma");
 
         string strasse = wsAdresse.Cell(2, 1).GetString();
         string nr = wsAdresse.Cell(2, 2).GetString();
         string bezirk = wsAdresse.Cell(2, 3).GetString();
         string ort = wsAdresse.Cell(2, 4).GetString();
-
         string adresse = $"{strasse} {nr}, {bezirk} {ort}";
+
+        string firma = wsFirma.Cell(2, 1).GetString();
+        string firmaStrasse = wsFirma.Cell(2, 2).GetString();
+        string firmaNr = wsFirma.Cell(2, 3).GetString();
+        string firmaPLZ = wsFirma.Cell(2, 4).GetString();
+        string firmaOrt = wsFirma.Cell(2, 5).GetString();
+        string atu = wsFirma.Cell(2, 6).GetString();
+
+        string firmaAdresse = $"{firmaStrasse} {firmaNr}";
+        string firmaPLZOrt = $"{firmaPLZ} {firmaOrt}";
 
         string outputPath = Path.Combine(folderPath, $"{inkrement}_{jahr}_ALLITECH_{strasse}.docx");
 
@@ -39,8 +49,7 @@ class Program
         var body = doc.MainDocumentPart.Document.Body;
 
         ReplaceText(body, "{DATUM}", DateTime.Now.ToString("dd. MMMM yyyy"));
-        ReplaceText(body, "{JAHR}", jahr);
-        ReplaceText(body, "{INKREMENT}", inkrement.ToString("D3"));
+        ReplaceText(body, "{RECHNUNGSNUMMER}", $"{inkrement:D3}/{jahr}");
         ReplaceText(body, "{ADRESSE}", adresse);
         ReplaceText(body, "{ZEITRAUM}", DateTime.Now.ToString("MMMM"));
 
@@ -80,6 +89,8 @@ class Program
         ReplaceText(body, "{SKONTO}", $"{skonto:0.00} €");
         ReplaceText(body, "{GESAMTSUMME}", $"{gesamtsumme:0.00} €");
 
+        InsertWarningText(body);
+
         doc.MainDocumentPart.Document.Save();
 
         Console.WriteLine($"Rechnung erstellt: {outputPath}");
@@ -94,11 +105,29 @@ class Program
 
     static void ReplaceText(W.Body body, string placeholder, string newValue)
     {
-        foreach (var text in body.Descendants<W.Text>())
+        var texts = body.Descendants<W.Text>();
+
+        foreach (var text in texts)
         {
             if (text.Text.Contains(placeholder))
             {
                 text.Text = text.Text.Replace(placeholder, newValue);
+            }
+        }
+
+        // Fix für gesplittete Runs
+        var paragraphs = body.Descendants<W.Paragraph>();
+
+        foreach (var p in paragraphs)
+        {
+            string fullText = string.Concat(p.Descendants<W.Text>().Select(t => t.Text));
+
+            if (fullText.Contains(placeholder))
+            {
+                fullText = fullText.Replace(placeholder, newValue);
+
+                p.RemoveAllChildren<W.Run>();
+                p.AppendChild(new W.Run(new W.Text(fullText)));
             }
         }
     }
@@ -114,5 +143,21 @@ class Program
             textElement.Text = textElement.Text.Replace(placeholder, "");
             parent.Parent.InsertAfter(table, parent);
         }
+    }
+
+    static void InsertWarningText(W.Body body)
+    {
+        var paragraph = new W.Paragraph(
+            new W.Run(
+                new W.RunProperties(
+                    new W.Bold(),
+                    new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+                ),
+                new W.Text("ACHTUNG: Wir möchten auf unsere neue Bankverbindung hinweisen!!!")
+            )
+        );
+
+        var lastParagraph = body.Elements<W.Paragraph>().Last();
+        body.InsertBefore(paragraph, lastParagraph);
     }
 }
