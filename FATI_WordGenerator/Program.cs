@@ -4,40 +4,35 @@ using W = DocumentFormat.OpenXml.Wordprocessing;
 
 class Program
 {
+    public class ExcelData
+    {
+        public string Strasse { get; set; }
+        public string Nr { get; set; }
+        public string Bezirk { get; set; }
+        public string Ort { get; set; }
+
+        public string Adresse => $"{Strasse} {Nr}, {Bezirk} {Ort}";
+    }
+
+    public class DocData
+    {
+        // später: Tabelle, Summe, Skonto, Gesamtsumme, etc.
+    }
+
     static void Main()
     {
-        // Ressourcenpfad
+
         string resourcesPath = "C:\\Users\\polise\\source\\repos\\FATI_WordGenerator\\FATI_WordGenerator\\Resources";
-        string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
-        string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
-
         string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-        string folderPath = Path.Combine(currentDir, "Rechnungen");
-
-        Directory.CreateDirectory(folderPath);
-
-
-        // Inkrement bestimmen
-        int inkrement = Directory.GetFiles(folderPath, "*.docx").Length + 1;
         string jahr = DateTime.Now.Year.ToString();
 
-        // Excel einlesen
-        using var workbook = new XLWorkbook(inputPath);
-        var wsAdresse = workbook.Worksheet("Adresse");
-        var wsPos = workbook.Worksheet("Positionen");
 
-        // Adresse zusammenbauen
-        string strasse = wsAdresse.Cell(2, 1).GetString();
-        string nr = wsAdresse.Cell(2, 2).GetString();
-        string bezirk = wsAdresse.Cell(2, 3).GetString();
-        string ort = wsAdresse.Cell(2, 4).GetString();
-        string adresse = $"{strasse} {nr}, {bezirk} {ort}";
+        var folderPath = CreateFolder(currentDir);
+        int inkrement = Directory.GetFiles(folderPath, "*.docx").Length + 1;
+        
+        using var doc = CreateDoc(folderPath, resourcesPath, jahr, inkrement);
 
-        // Ziel-Dateiname
-        string outputPath = Path.Combine(folderPath, $"{inkrement}_{jahr}_ALLITECH_{strasse}.docx");
-        File.Copy(templatePath, outputPath, true);
-
-        using var doc = WordprocessingDocument.Open(outputPath, true);
+        
         var body = doc.MainDocumentPart.Document.Body;
 
         // Platzhalter ersetzen
@@ -87,6 +82,49 @@ class Program
 
         doc.MainDocumentPart.Document.Save();
         Console.WriteLine($"Rechnung erstellt: {outputPath}");
+    }
+
+    private static string CreateFolder(string currentDir)
+    {
+        string folderPath = Path.Combine(currentDir, "Rechnungen");
+        Directory.CreateDirectory(folderPath);
+
+        return folderPath;
+    }
+
+    private static WordprocessingDocument CreateDoc(string folderPath, string resourcesPath, string jahr, int inkrement)
+    {
+        var inputExcel = CreateExcel(folderPath, resourcesPath, jahr, inkrement);
+        GetOutPutPath(inputExcel);
+
+        string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
+        File.Copy(templatePath, outputPath, true);
+
+        return WordprocessingDocument.Open(outputPath, true);
+    }
+
+    private static string GetOutPutPath()
+    {
+        return Path.Combine(folderPath, $"{inkrement}_{jahr}_ALLITECH_{strasse}.docx");
+    }
+
+    private static string CreateExcel(string folderPath, string resourcesPath, string jahr, int inkrement)
+    {
+        var inputExcel = new
+        string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
+
+        using var workbook = new XLWorkbook(inputPath);
+        var wsAdresse = workbook.Worksheet("Adresse");
+        var wsPos = workbook.Worksheet("Positionen");
+
+        // Adresse zusammenbauen
+        string strasse = wsAdresse.Cell(2, 1).GetString();
+        string nr = wsAdresse.Cell(2, 2).GetString();
+        string bezirk = wsAdresse.Cell(2, 3).GetString();
+        string ort = wsAdresse.Cell(2, 4).GetString();
+        string adresse = $"{strasse} {nr}, {bezirk} {ort}";
+
+        return outputPath = Path.Combine(folderPath, $"{inkrement}_{jahr}_ALLITECH_{strasse}.docx");
     }
 
     static void ReplaceText(W.Body body, string placeholder, string newValue)
