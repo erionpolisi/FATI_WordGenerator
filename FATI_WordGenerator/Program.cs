@@ -81,9 +81,9 @@ class Program
             double skonto = summe * 0.03;
             double gesamtsumme = summe - skonto;
 
-            ReplaceText(body, "{SUMME}", $"{summe:0.00} €");
-            ReplaceText(body, "{SKONTO}", $"{skonto:0.00} €");
-            ReplaceText(body, "{GESAMTSUMME}", $"{gesamtsumme:0.00} €");
+            ReplaceText(body, "{SUMME}", $"{summe:N2} €");
+            ReplaceText(body, "{SKONTO}", $"{skonto:N2} €");
+            ReplaceText(body, "{GESAMTSUMME}", $"{gesamtsumme:N2} €");
 
             InsertWarningText(body);
 
@@ -245,12 +245,9 @@ class Program
                 new W.TableCell(new W.Paragraph(CreateRun($"{pos}"))),
 
                 new W.TableCell(new W.Paragraph(CreateRun($"{menge} {mengenbez}"))),
-
                 new W.TableCell(new W.Paragraph(CreateRun(bez))),
-
-                new W.TableCell(new W.Paragraph(CreateRun($"{preis:0.00} €"))),
-
-                new W.TableCell(new W.Paragraph(CreateRun($"{gesamt:0.00} €")))
+                new W.TableCell(new W.Paragraph(CreateRun($"{preis:N2} €"))),
+                new W.TableCell(new W.Paragraph(CreateRun($"{gesamt:N2} €")))
             );
 
             table.Append(tr);
