@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿using System.Reflection.Metadata;
+using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Packaging;
 using W = DocumentFormat.OpenXml.Wordprocessing;
 
@@ -6,105 +7,182 @@ class Program
 {
     static void Main()
     {
-        string resourcesPath;
-
-#if DEBUG
-        resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources");
-#else
-        resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
-#endif
-        string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-
-        string jahr = DateTime.Now.Year.ToString();
-
-        var folderPath = CreateFolder(currentDir);
-        int inkrement = Directory.GetFiles(folderPath, "*.docx").Length + 1;
-
-        string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
-
-        using var workbook = new XLWorkbook(inputPath);
-        Console.WriteLine("Input_Excel entered...");
-
-        var wsAdresse = workbook.Worksheet("Adresse");
-        var wsPos = workbook.Worksheet("Positionen");
-        var wsFirma = workbook.Worksheet("Firma");
-
-        string strasse = wsAdresse.Cell(2, 1).GetString();
-        string nr = wsAdresse.Cell(2, 2).GetString();
-        string bezirk = wsAdresse.Cell(2, 3).GetString();
-        string ort = wsAdresse.Cell(2, 4).GetString();
-        string adresse = $"{strasse} {nr}, {bezirk} {ort}";
-
-        string firma = wsFirma.Cell(2, 1).GetString();
-        string firmaStrasse = wsFirma.Cell(2, 2).GetString();
-        string firmaNr = wsFirma.Cell(2, 3).GetString();
-        string firmaPLZ = wsFirma.Cell(2, 4).GetString();
-        string firmaOrt = wsFirma.Cell(2, 5).GetString();
-        string atu = wsFirma.Cell(2, 6).GetString();
-
-        string firmaAdresse = $"{firmaStrasse} {firmaNr}";
-        string firmaPLZOrt = $"{firmaPLZ} {firmaOrt}";
-
-        string outputPath = Path.Combine(folderPath, $"{inkrement}_{jahr}_{firma}_{strasse} {nr}.docx");
-
-        string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
-        File.Copy(templatePath, outputPath, true);
-
-        using var doc = WordprocessingDocument.Open(outputPath, true);
-
-        var body = doc.MainDocumentPart.Document.Body;
-
-        ReplaceText(body, "{DATUM}", DateTime.Now.ToString("dd. MMMM yyyy"));
-        ReplaceText(body, "{RECHNUNGSNUMMER}", $"{inkrement:D3}/{jahr}");
-        ReplaceText(body, "{ADRESSE}", adresse);
-        ReplaceText(body, "{ZEITRAUM}", DateTime.Now.ToString("MMMM"));
-
-        ReplaceText(body, "{FIRMA}", firma);
-        ReplaceText(body, "{FIRMA_ADRESSE}", firmaAdresse);
-        ReplaceText(body, "{FIRMA_PLZ_ORT}", firmaPLZOrt);
-        ReplaceText(body, "{ATU}", atu);
-
-        W.Table table = new W.Table();
-
-        double summe = 0;
-        int pos = 1;
-
-        foreach (var row in wsPos.RowsUsed().Skip(1))
+        Console.ResetColor();
+        try
         {
-            int menge = row.Cell(1).GetValue<int>();
-            string mengenbez = row.Cell(2).GetString();
-            string bez = row.Cell(3).GetString();
-            double preis = row.Cell(4).GetDouble();
+            string resourcesPath;
+#if DEBUG
+            resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources");
+#else
+            resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+#endif
+            string currentDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            double gesamt = menge * preis;
-            summe += gesamt;
+            string jahr = DateTime.Now.Year.ToString();
 
-            var tr = new W.TableRow(
-                new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"Pos.{pos}")))),
-                new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{menge} {mengenbez}")))),
-                new W.TableCell(new W.Paragraph(new W.Run(new W.Text(bez)))),
-                new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{preis:0.00} €")))),
-                new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{gesamt:0.00} €"))))
-            );
+            var folderPath = CreateFolder(currentDir);
 
-            table.Append(tr);
-            pos++;
+            string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
+
+            using var workbook = new XLWorkbook(inputPath);
+            Console.WriteLine("Input.xlsx geöffnet...");
+
+            var wsAdresse = workbook.Worksheet("Adresse");
+            var wsPos = workbook.Worksheet("Positionen");
+            var wsFirma = workbook.Worksheet("Firma");
+
+            string strasse = wsAdresse.Cell(2, 1).GetString();
+            string nr = wsAdresse.Cell(2, 2).GetString();
+            string bezirk = wsAdresse.Cell(2, 3).GetString();
+            string ort = wsAdresse.Cell(2, 4).GetString();
+            string zeitraumMonateRaw = wsAdresse.Cell(2, 5).GetString();
+            string zeitraumJahr = wsAdresse.Cell(2, 6).GetString();
+
+            string adresse = $"{strasse} {nr}, {bezirk} {ort}";
+            var zeitraum = GetZeitraum(zeitraumMonateRaw, zeitraumJahr);
+
+            string firma = wsFirma.Cell(2, 1).GetString();
+            string firmaStrasse = wsFirma.Cell(2, 2).GetString();
+            string firmaNr = wsFirma.Cell(2, 3).GetString();
+            string firmaPLZ = wsFirma.Cell(2, 4).GetString();
+            string firmaOrt = wsFirma.Cell(2, 5).GetString();
+            string atu = wsFirma.Cell(2, 6).GetString();
+
+            string firmaAdresse = $"{firmaStrasse} {firmaNr}";
+            string firmaPLZOrt = $"{firmaPLZ} {firmaOrt}";
+
+            int inkrement = Directory
+                .GetFiles(folderPath, $"*_{jahr}_{firma}_*.docx")
+                .Length + 1;
+
+            string filename = $"{inkrement}_{jahr}_{firma}_{strasse} {nr}.docx";
+            string outputPath = Path.Combine(folderPath, filename);
+
+            string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
+            File.Copy(templatePath, outputPath, true);
+
+            using var doc = WordprocessingDocument.Open(outputPath, true);
+            Console.WriteLine("Neue Rechnung geöffnet...");
+
+            var body = doc.MainDocumentPart.Document.Body;
+
+            ReplaceText(body, "{DATUM}", DateTime.Now.ToString("dd. MMMM yyyy"));
+            ReplaceText(body, "{RECHNUNGSNUMMER}", $"{inkrement:D3}/{jahr}");
+            ReplaceText(body, "{ADRESSE}", adresse);
+            ReplaceText(body, "{ZEITRAUM}", zeitraum);
+
+            ReplaceText(body, "{FIRMA}", firma);
+            ReplaceText(body, "{FIRMA_ADRESSE}", firmaAdresse);
+            ReplaceText(body, "{FIRMA_PLZ_ORT}", firmaPLZOrt);
+            ReplaceText(body, "{ATU}", atu);
+
+            W.Table table = new W.Table();
+
+            double summe = 0;
+            int pos = 1;
+
+            foreach (var row in wsPos.RowsUsed().Skip(1))
+            {
+                int menge = row.Cell(1).GetValue<int>();
+                string mengenbez = row.Cell(2).GetString();
+                string bez = row.Cell(3).GetString();
+                double preis = row.Cell(4).GetDouble();
+
+                double gesamt = menge * preis;
+                summe += gesamt;
+
+                var tr = new W.TableRow(
+                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"Pos.{pos}")))),
+                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{menge} {mengenbez}")))),
+                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text(bez)))),
+                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{preis:0.00} €")))),
+                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{gesamt:0.00} €"))))
+                );
+
+                table.Append(tr);
+                pos++;
+            }
+
+            InsertTableAtPlaceholder(body, "{TABELLE}", table);
+
+            double skonto = summe * 0.03;
+            double gesamtsumme = summe - skonto;
+
+            ReplaceText(body, "{SUMME}", $"{summe:0.00} €");
+            ReplaceText(body, "{SKONTO}", $"{skonto:0.00} €");
+            ReplaceText(body, "{GESAMTSUMME}", $"{gesamtsumme:0.00} €");
+
+            InsertWarningText(body);
+
+            doc.MainDocumentPart.Document.Save();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Rechnung erstellt: {filename}");
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+        catch (ArgumentException e)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(e.Message);
+            Console.ResetColor();
+        }
+        catch (IOException e)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            if (e.Message.Contains("Input.xlsx"))
+            {
+                Console.WriteLine("Bitte Excel schließen");
+            }
+            else if (e.Message.Contains("RechnungTemplate.docx"))
+            {
+                Console.WriteLine("Bitte Word schließen");
+            }
+            else
+            {
+                Console.WriteLine(e.Message);
+            }
+            Console.ResetColor();
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(ex.Message);
+            Console.ResetColor();
+        }
+    }
+
+    private static string GetZeitraum(string zeitraumMonateRaw, string zeitraumJahr)
+    {
+        string[] zeitraumMonate = zeitraumMonateRaw.Split("-");
+
+        string zeitraum = string.Empty;
+        int zeitraumMonatsZahl = 0;
+
+        switch (zeitraumMonate.Length)
+        {
+            case 1:
+                zeitraumMonatsZahl = int.Parse(zeitraumMonate[0].Trim());
+
+                zeitraum = ((Months)zeitraumMonatsZahl) + " " + zeitraumJahr;
+                break;
+
+            case 2:
+                zeitraumMonatsZahl = int.Parse(zeitraumMonate[0].Trim());
+                int zeitraumMonatsZahl2 = int.Parse(zeitraumMonate[1].Trim());
+
+                zeitraum = ((Months)zeitraumMonatsZahl) + " - " + ((Months)zeitraumMonatsZahl2) + " " + zeitraumJahr;
+                break;
+
+            default:
+                throw new ArgumentException(
+                    "Ungültiger Zeitraum. Bitte Input.xlsx korrekt ausfüllen.\n" +
+                    "Beispiele:\n" +
+                    "3        -> März\n" +
+                    "3-4      -> März - April"
+                );
         }
 
-        InsertTableAtPlaceholder(body, "{TABELLE}", table);
-
-        double skonto = summe * 0.03;
-        double gesamtsumme = summe - skonto;
-
-        ReplaceText(body, "{SUMME}", $"{summe:0.00} €");
-        ReplaceText(body, "{SKONTO}", $"{skonto:0.00} €");
-        ReplaceText(body, "{GESAMTSUMME}", $"{gesamtsumme:0.00} €");
-
-        InsertWarningText(body);
-
-        doc.MainDocumentPart.Document.Save();
-
-        Console.WriteLine($"Rechnung erstellt: {outputPath}");
+        return zeitraum;
     }
 
     private static string CreateFolder(string currentDir)
@@ -154,6 +232,23 @@ class Program
             textElement.Text = textElement.Text.Replace(placeholder, "");
             parent.Parent.InsertAfter(table, parent);
         }
+    }
+
+    public enum Months
+    {
+        Unbekannt = 0,
+        Januar = 1,
+        Februar = 2,
+        März = 3,
+        April = 4,
+        Mai = 5,
+        Juni = 6,
+        Juli = 7,
+        August = 8,
+        September = 9,
+        Oktober = 10,
+        November = 11,
+        Dezember = 12
     }
 
     static void InsertWarningText(W.Body body)
