@@ -45,7 +45,7 @@ class Program
         string firmaAdresse = $"{firmaStrasse} {firmaNr}";
         string firmaPLZOrt = $"{firmaPLZ} {firmaOrt}";
 
-        string outputPath = Path.Combine(folderPath, $"{inkrement}_{jahr}_ALLITECH_{strasse}.docx");
+        string outputPath = Path.Combine(folderPath, $"{inkrement}_{jahr}_{firma}_{strasse} {nr}.docx");
 
         string templatePath = Path.Combine(resourcesPath, "RechnungTemplate.docx");
         File.Copy(templatePath, outputPath, true);
