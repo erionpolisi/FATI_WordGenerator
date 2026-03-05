@@ -1,6 +1,7 @@
-﻿using System.Reflection.Metadata;
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using System.Reflection.Metadata;
 using W = DocumentFormat.OpenXml.Wordprocessing;
 
 class Program
@@ -130,7 +131,7 @@ class Program
         }
     }
 
-    private static double CreateTableAndGetSum(IXLWorksheet wsPos, W.Body body, string? tableTitle = null)
+    private static double CreateTableAndGetSum(IXLWorksheet wsPos, W.Body body)
     {
         W.Table table = new W.Table(
             new W.TableProperties(
@@ -234,6 +235,7 @@ class Program
 
         double summe = 0;
         int pos = 1;
+        string tableTitle = string.Empty;
 
         foreach (var row in wsPos.RowsUsed().Skip(1))
         {
@@ -241,7 +243,10 @@ class Program
             string mengenbez = row.Cell(2).GetString();
             string bez = row.Cell(3).GetString();
             double preis = row.Cell(4).GetDouble();
-            string details = row.Cell(5).GetString();
+
+            if (string.IsNullOrWhiteSpace(tableTitle)) 
+                tableTitle = row.Cell(5).GetString();
+
 
             double gesamt = menge * preis;
             summe += gesamt;
@@ -275,8 +280,11 @@ class Program
                 )
             );
 
-            body.InsertBefore(titleParagraph, body.Descendants<W.Paragraph>()
-                .First(p => p.InnerText.Contains("{TABELLE}")));
+            body.InsertBefore(
+                titleParagraph,
+                body.Descendants<W.Paragraph>()
+                    .First(p => p.InnerText.Contains("{TABELLE}"))
+            );
         }
 
         InsertTableAtPlaceholder(body, "{TABELLE}", table);
