@@ -11,7 +11,7 @@ class Program
 #if DEBUG
         resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources");
 #else
-resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+        resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
 #endif
         string currentDir = AppDomain.CurrentDomain.BaseDirectory;
 
