@@ -1,6 +1,3 @@
-1. resourcesPath == path zu den Resources im Projekt (für jeden User unterschiedlich)
-2. für die exe datei muss man das Program auf Release stellen und im Terminal folgendes eingeben: 
-
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-
-Somit wird im Ordner in dem die .exe Datei abgespielt wird eine Datei mit dem Ordnernamen "Rechnungen" erstellt und mithilfe der Excel-Iput-Parametern ein neues Word-Dokument erstellt.
+1. Run ``.\publish.ps1`` to get the .exe file
+2. Put values into Input.xlsx in order to import it into your word file
+3. By executing the .exe file, a folder "Rechnungen" will be created (if not exists). All the word files will be put in here.
