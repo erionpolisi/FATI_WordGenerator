@@ -76,34 +76,7 @@ class Program
             ReplaceText(body, "{FIRMA_PLZ_ORT}", firmaPLZOrt);
             ReplaceText(body, "{ATU}", atu);
 
-            W.Table table = new W.Table();
-
-            double summe = 0;
-            int pos = 1;
-
-            foreach (var row in wsPos.RowsUsed().Skip(1))
-            {
-                int menge = row.Cell(1).GetValue<int>();
-                string mengenbez = row.Cell(2).GetString();
-                string bez = row.Cell(3).GetString();
-                double preis = row.Cell(4).GetDouble();
-
-                double gesamt = menge * preis;
-                summe += gesamt;
-
-                var tr = new W.TableRow(
-                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"Pos.{pos}")))),
-                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{menge} {mengenbez}")))),
-                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text(bez)))),
-                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{preis:0.00} €")))),
-                    new W.TableCell(new W.Paragraph(new W.Run(new W.Text($"{gesamt:0.00} €"))))
-                );
-
-                table.Append(tr);
-                pos++;
-            }
-
-            InsertTableAtPlaceholder(body, "{TABELLE}", table);
+            var summe = CreateTableAndGetSum(wsPos, body);
 
             double skonto = summe * 0.03;
             double gesamtsumme = summe - skonto;
@@ -118,7 +91,13 @@ class Program
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Rechnung erstellt: {filename}");
-            Console.ForegroundColor = ConsoleColor.White;
+            Console.ResetColor();
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = outputPath,
+                UseShellExecute = true
+            });
         }
         catch (ArgumentException e)
         {
@@ -149,6 +128,137 @@ class Program
             Console.WriteLine(ex.Message);
             Console.ResetColor();
         }
+    }
+
+    private static double CreateTableAndGetSum(IXLWorksheet wsPos, W.Body body)
+    {
+        W.Table table = new W.Table(
+            new W.TableProperties(
+
+                new W.TableWidth()
+                {
+                    Width = "5000",
+                    Type = W.TableWidthUnitValues.Pct
+                },
+
+                new W.TableBorders(
+                    new W.TopBorder { Val = W.BorderValues.Nil },
+                    new W.BottomBorder { Val = W.BorderValues.Nil },
+                    new W.LeftBorder { Val = W.BorderValues.Nil },
+                    new W.RightBorder { Val = W.BorderValues.Nil },
+                    new W.InsideHorizontalBorder { Val = W.BorderValues.Nil },
+                    new W.InsideVerticalBorder { Val = W.BorderValues.Nil }
+                )
+            )
+        );
+
+        var header = new W.TableRow(
+
+     new W.TableCell(
+         new W.TableCellProperties(
+             new W.TableCellBorders(
+                 new W.BottomBorder { Val = W.BorderValues.Single, Size = 8 }
+             )
+         ),
+         new W.Paragraph(
+             new W.Run(
+                 new W.RunProperties(new W.Bold(), new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }),
+                 new W.Text("Nr.")
+             )
+         )
+     ),
+
+     new W.TableCell(
+         new W.TableCellProperties(
+             new W.TableCellBorders(
+                 new W.BottomBorder { Val = W.BorderValues.Single, Size = 8 }
+             )
+         ),
+         new W.Paragraph(
+             new W.Run(
+                 new W.RunProperties(new W.Bold(), new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }),
+                 new W.Text("Menge")
+             )
+         )
+     ),
+
+     new W.TableCell(
+         new W.TableCellProperties(
+             new W.TableCellBorders(
+                 new W.BottomBorder { Val = W.BorderValues.Single, Size = 8 }
+             )
+         ),
+         new W.Paragraph(
+             new W.Run(
+                 new W.RunProperties(new W.Bold(), new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }),
+                 new W.Text("Bezeichnung")
+             )
+         )
+     ),
+
+     new W.TableCell(
+         new W.TableCellProperties(
+             new W.TableCellBorders(
+                 new W.BottomBorder { Val = W.BorderValues.Single, Size = 8 }
+             )
+         ),
+         new W.Paragraph(
+             new W.Run(
+                 new W.RunProperties(new W.Bold(), new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }),
+                 new W.Text("Einzelpreis")
+             )
+         )
+     ),
+
+     new W.TableCell(
+         new W.TableCellProperties(
+             new W.TableCellBorders(
+                 new W.BottomBorder { Val = W.BorderValues.Single, Size = 8 }
+             )
+         ),
+         new W.Paragraph(
+             new W.Run(
+                 new W.RunProperties(new W.Bold(), new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }),
+                 new W.Text("Gesamtpreis")
+             )
+         )
+     )
+ );
+
+        table.Append(header);
+
+        double summe = 0;
+        int pos = 1;
+
+        foreach (var row in wsPos.RowsUsed().Skip(1))
+        {
+            int menge = row.Cell(1).GetValue<int>();
+            string mengenbez = row.Cell(2).GetString();
+            string bez = row.Cell(3).GetString();
+            double preis = row.Cell(4).GetDouble();
+
+            double gesamt = menge * preis;
+            summe += gesamt;
+
+            var tr = new W.TableRow(
+
+                new W.TableCell(new W.Paragraph(CreateRun($"{pos}"))),
+
+                new W.TableCell(new W.Paragraph(CreateRun($"{menge} {mengenbez}"))),
+
+                new W.TableCell(new W.Paragraph(CreateRun(bez))),
+
+                new W.TableCell(new W.Paragraph(CreateRun($"{preis:0.00} €"))),
+
+                new W.TableCell(new W.Paragraph(CreateRun($"{gesamt:0.00} €")))
+            );
+
+            table.Append(tr);
+            pos++;
+        }
+
+        InsertTableAtPlaceholder(body, "{TABELLE}", table);
+        return summe;
     }
 
     private static string GetZeitraum(string zeitraumMonateRaw, string zeitraumJahr)
@@ -190,6 +300,16 @@ class Program
         string folderPath = Path.Combine(currentDir, "Rechnungen");
         Directory.CreateDirectory(folderPath);
         return folderPath;
+    }
+
+    private static W.Run CreateRun(string text)
+    {
+        return new W.Run(
+            new W.RunProperties(
+                new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+            ),
+            new W.Text(text)
+        );
     }
 
     static void ReplaceText(W.Body body, string placeholder, string newValue)
