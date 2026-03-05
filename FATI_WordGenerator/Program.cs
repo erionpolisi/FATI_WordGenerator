@@ -6,7 +6,13 @@ class Program
 {
     static void Main()
     {
-        string resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources");
+        string resourcesPath;
+
+#if DEBUG
+        resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources");
+#else
+resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+#endif
         string currentDir = AppDomain.CurrentDomain.BaseDirectory;
 
         string jahr = DateTime.Now.Year.ToString();
