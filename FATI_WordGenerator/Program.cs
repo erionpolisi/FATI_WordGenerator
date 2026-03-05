@@ -59,6 +59,11 @@ class Program
         ReplaceText(body, "{ADRESSE}", adresse);
         ReplaceText(body, "{ZEITRAUM}", DateTime.Now.ToString("MMMM"));
 
+        ReplaceText(body, "{FIRMA}", firma);
+        ReplaceText(body, "{FIRMA_ADRESSE}", firmaAdresse);
+        ReplaceText(body, "{FIRMA_PLZ_ORT}", firmaPLZOrt);
+        ReplaceText(body, "{ATU}", atu);
+
         W.Table table = new W.Table();
 
         double summe = 0;
