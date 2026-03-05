@@ -38,7 +38,7 @@ class Program
             string zeitraumMonateRaw = wsAdresse.Cell(2, 5).GetString();
             string zeitraumJahr = wsAdresse.Cell(2, 6).GetString();
 
-            string adresse = $"{strasse} {nr}, {bezirk} {ort}";
+            string adresse = $"BVH: {strasse} {nr}, {bezirk} {ort}";
             var zeitraum = GetZeitraum(zeitraumMonateRaw, zeitraumJahr);
 
             string firma = wsFirma.Cell(2, 1).GetString();
@@ -130,10 +130,15 @@ class Program
         }
     }
 
-    private static double CreateTableAndGetSum(IXLWorksheet wsPos, W.Body body)
+    private static double CreateTableAndGetSum(IXLWorksheet wsPos, W.Body body, string? tableTitle = null)
     {
         W.Table table = new W.Table(
             new W.TableProperties(
+
+                new W.TableJustification()
+                {
+                    Val = W.TableRowAlignmentValues.Center
+                },
 
                 new W.TableWidth()
                 {
@@ -163,7 +168,7 @@ class Program
          new W.Paragraph(
              new W.Run(
                  new W.RunProperties(new W.Bold(), new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }),
-                 new W.Text("Nr.")
+                 new W.Text("Position")
              )
          )
      ),
@@ -236,6 +241,7 @@ class Program
             string mengenbez = row.Cell(2).GetString();
             string bez = row.Cell(3).GetString();
             double preis = row.Cell(4).GetDouble();
+            string details = row.Cell(5).GetString();
 
             double gesamt = menge * preis;
             summe += gesamt;
@@ -252,6 +258,25 @@ class Program
 
             table.Append(tr);
             pos++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(tableTitle))
+        {
+            var titleParagraph = new W.Paragraph(
+                new W.ParagraphProperties(
+                    new W.Justification() { Val = W.JustificationValues.Center }
+                ),
+                new W.Run(
+                    new W.RunProperties(
+                        new W.Bold(),
+                        new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+                    ),
+                    new W.Text(tableTitle)
+                )
+            );
+
+            body.InsertBefore(titleParagraph, body.Descendants<W.Paragraph>()
+                .First(p => p.InnerText.Contains("{TABELLE}")));
         }
 
         InsertTableAtPlaceholder(body, "{TABELLE}", table);
