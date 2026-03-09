@@ -1,11 +1,12 @@
-﻿using DocumentFormat.OpenXml.ExtendedProperties;
+﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.ExtendedProperties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FATI_WordGenerator.BusinessLayer
+namespace FATI_WordGenerator.Domain
 {
     public class Invoice
     {

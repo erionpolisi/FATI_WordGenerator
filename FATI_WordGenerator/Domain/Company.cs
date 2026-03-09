@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FATI_WordGenerator.BusinessLayer
+namespace FATI_WordGenerator.Domain
 {
     public class Company
     {
@@ -14,5 +14,8 @@ namespace FATI_WordGenerator.BusinessLayer
         public string PLZ { get; set; }
         public string City { get; set; }
         public string ATU { get; set; }
+
+        public string StreetAndNumber { get; set; } = string.Empty;
+        public string PLZAndCity { get; set; } = string.Empty;
     }
 }

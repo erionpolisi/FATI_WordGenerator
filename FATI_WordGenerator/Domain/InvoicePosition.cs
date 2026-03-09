@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FATI_WordGenerator.BusinessLayer
+namespace FATI_WordGenerator.Domain
 {
     public class InvoicePosition
     {

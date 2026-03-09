@@ -11,46 +11,11 @@ class Program
         Console.ResetColor();
         try
         {
-            string resourcesPath;
-#if DEBUG
-            resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources");
-#else
-            resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
-#endif
-            string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-
-            string jahr = DateTime.Now.Year.ToString();
-
-            var folderPath = CreateFolder(currentDir);
-
-            string inputPath = Path.Combine(resourcesPath, "Input.xlsx");
-
-            using var workbook = new XLWorkbook(inputPath);
-            Console.WriteLine("Input.xlsx geöffnet...");
-
-            var wsAdresse = workbook.Worksheet("Adresse");
+     
             var wsPos = workbook.Worksheet("Positionen");
             var wsFirma = workbook.Worksheet("Firma");
 
-            string strasse = wsAdresse.Cell(2, 1).GetString();
-            string nr = wsAdresse.Cell(2, 2).GetString();
-            string bezirk = wsAdresse.Cell(2, 3).GetString();
-            string ort = wsAdresse.Cell(2, 4).GetString();
-            string zeitraumMonateRaw = wsAdresse.Cell(2, 5).GetString();
-            string zeitraumJahr = wsAdresse.Cell(2, 6).GetString();
-
-            string adresse = $"BVH: {strasse} {nr}, {bezirk} {ort}";
-            var zeitraum = GetZeitraum(zeitraumMonateRaw, zeitraumJahr);
-
-            string firma = wsFirma.Cell(2, 1).GetString();
-            string firmaStrasse = wsFirma.Cell(2, 2).GetString();
-            string firmaNr = wsFirma.Cell(2, 3).GetString();
-            string firmaPLZ = wsFirma.Cell(2, 4).GetString();
-            string firmaOrt = wsFirma.Cell(2, 5).GetString();
-            string atu = wsFirma.Cell(2, 6).GetString();
-
-            string firmaAdresse = $"{firmaStrasse} {firmaNr}";
-            string firmaPLZOrt = $"{firmaPLZ} {firmaOrt}";
+            
 
             int inkrement = Directory
                 .GetFiles(folderPath, $"*_{jahr}_{firma}_*.docx")
@@ -301,40 +266,6 @@ class Program
 
         InsertTableAtPlaceholder(body, "{TABELLE}", table);
         return summe;
-    }
-
-    private static string GetZeitraum(string zeitraumMonateRaw, string zeitraumJahr)
-    {
-        string[] zeitraumMonate = zeitraumMonateRaw.Split("-");
-
-        string zeitraum = string.Empty;
-        int zeitraumMonatsZahl = 0;
-
-        switch (zeitraumMonate.Length)
-        {
-            case 1:
-                zeitraumMonatsZahl = int.Parse(zeitraumMonate[0].Trim());
-
-                zeitraum = ((Months)zeitraumMonatsZahl) + " " + zeitraumJahr;
-                break;
-
-            case 2:
-                zeitraumMonatsZahl = int.Parse(zeitraumMonate[0].Trim());
-                int zeitraumMonatsZahl2 = int.Parse(zeitraumMonate[1].Trim());
-
-                zeitraum = ((Months)zeitraumMonatsZahl) + " - " + ((Months)zeitraumMonatsZahl2) + " " + zeitraumJahr;
-                break;
-
-            default:
-                throw new ArgumentException(
-                    "Ungültiger Zeitraum. Bitte Input.xlsx korrekt ausfüllen.\n" +
-                    "Beispiele:\n" +
-                    "3        -> März\n" +
-                    "3-4      -> März - April"
-                );
-        }
-
-        return zeitraum;
     }
 
     private static string CreateFolder(string currentDir)
