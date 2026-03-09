@@ -65,7 +65,8 @@ class Program
             using var doc = WordprocessingDocument.Open(outputPath, true);
             Console.WriteLine("Neue Rechnung geöffnet...");
 
-            var body = doc.MainDocumentPart.Document.Body;
+            var body = doc.MainDocumentPart?.Document?.Body
+                 ?? throw new Exception("Word Dokument hat keinen Body");
 
             ReplaceText(body, "{DATUM}", DateTime.Now.ToString("dd. MMMM yyyy"));
             ReplaceText(body, "{RECHNUNGSNUMMER}", $"{inkrement:D3}/{jahr}");
@@ -128,6 +129,10 @@ class Program
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(ex.Message);
             Console.ResetColor();
+        }
+        finally
+        {
+            Console.ReadKey();
         }
     }
 
@@ -239,10 +244,17 @@ class Program
 
         foreach (var row in wsPos.RowsUsed().Skip(1))
         {
-            int menge = row.Cell(1).GetValue<int>();
+            if (!row.Cell(1).TryGetValue<int>(out int menge))
+                throw new ArgumentException("Ungültige Menge in Positionen (Spalte 1)");
+
             string mengenbez = row.Cell(2).GetString();
             string bez = row.Cell(3).GetString();
-            double preis = row.Cell(4).GetDouble();
+
+            if (!row.Cell(4).TryGetValue<double>(out double preis))
+            {
+                if (!double.TryParse(row.Cell(4).GetString(), out preis))
+                    throw new ArgumentException($"Ungültiger Preis in Zeile {row.RowNumber()}");
+            }
 
             if (string.IsNullOrWhiteSpace(tableTitle)) 
                 tableTitle = row.Cell(5).GetString();
@@ -376,12 +388,18 @@ class Program
         var textElement = body.Descendants<W.Text>()
             .FirstOrDefault(t => t.Text.Contains(placeholder));
 
-        if (textElement != null)
-        {
-            var parent = textElement.Parent;
-            textElement.Text = textElement.Text.Replace(placeholder, "");
-            parent.Parent.InsertAfter(table, parent);
-        }
+        if (textElement == null)
+            throw new Exception($"Placeholder {placeholder} nicht im Word Dokument gefunden.");
+
+        var parent = textElement.Parent
+            ?? throw new Exception("TextElement hat kein Parent.");
+
+        var grandParent = parent.Parent
+            ?? throw new Exception("Parent hat kein Parent.");
+
+        textElement.Text = textElement.Text.Replace(placeholder, "");
+
+        grandParent.InsertAfter(table, parent);
     }
 
     public enum Months
