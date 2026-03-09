@@ -14,19 +14,26 @@ namespace FATI_WordGenerator.Services
         public Invoice ReadInvoice(string path)
         {
             var invoice = new Invoice();
-
             using var workbook = new XLWorkbook(path);
 
-            var wsAdresse = workbook.Worksheet("Adresse");
-            var wsFirma = workbook.Worksheet("Firma");
-            var wsPos = workbook.Worksheet("Positionen");
+            try
+            {
+                var wsAdresse = workbook.Worksheet("Adresse");
+                var wsFirma = workbook.Worksheet("Firma");
+                var wsPos = workbook.Worksheet("Positionen");
 
-            invoice.Address = CreateAdressString(wsAdresse);
-            invoice.Period = GetPeriod(wsAdresse);
-            invoice.Company = GetCompany(wsFirma);
-            invoice.Positions = ReadPositions(wsPos);
+                invoice.Address = CreateAdressString(wsAdresse);
+                invoice.Period = GetPeriod(wsAdresse);
+                invoice.Company = GetCompany(wsFirma);
+                invoice.Positions = ReadPositions(wsPos);
 
-            return invoice;
+                return invoice;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Fehler beim Lesen der Excel Datei.", ex);
+            }
         }
 
         private string CreateAdressString(IXLWorksheet wsAdresse)

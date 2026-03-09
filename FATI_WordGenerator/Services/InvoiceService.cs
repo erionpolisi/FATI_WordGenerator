@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
 using FATI_WordGenerator.Domain;
 using FATI_WordGenerator.Infrastructure;
 using System;
@@ -15,26 +16,54 @@ namespace FATI_WordGenerator.Services
         private readonly ExcelService _excelService = new();
         private readonly WordService _wordService = new();
 
-        internal void Generate()
+        public readonly int _year = DateTime.Now.Year;
+
+        public int Increment { get; private set; }
+
+        internal string Generate()
         {
-            var invoice = _excelService.ReadInvoice(_paths.InputExcelPath);
             try
             {
-                _wordService.Generate(invoice);
-            }
-            catch
-            {
+                var invoice = _excelService.ReadInvoice(_paths.InputExcelPath);
 
-            }           
+                Increment = GetInkrement(invoice);
+
+                var outputPath = CopyTemplate(invoice);
+
+                _wordService.Generate(outputPath, invoice, Increment);
+
+                return outputPath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fehler beim Erstellen der Rechnung: {ex.Message}");
+                throw;
+            }
         }
 
-        public int GetInkrement(Invoice invoice)
+        private int GetInkrement(Invoice invoice)
         {
-            string jahr = DateTime.Now.Year.ToString();
-
             return Directory
-                .GetFiles(_paths.InvoiceFolder, $"*_{jahr}_{invoice.Company.Name}_*.docx")
+                .GetFiles(_paths.InvoiceFolder, $"*_{_year}_{invoice.Company.Name}_*.docx")
                 .Length + 1;
+        }
+
+        public string CopyTemplate(Invoice invoice)
+        {
+            try
+            {
+                string filename = $"{Increment}_{_year}_{invoice.Company.Name}_{invoice.Company.Street} {invoice.Company.Number}.docx";
+                string outputPath = Path.Combine(_paths.InvoiceFolder, filename);
+                string templatePath = Path.Combine(_paths.ResourcesPath, "RechnungTemplate.docx");
+                File.Copy(templatePath, outputPath, true);
+
+                return outputPath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message, "Couldn't copy Template to TargetFolder");
+                return string.Empty;
+            }
         }
     }
 }
