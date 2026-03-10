@@ -1,0 +1,4 @@
+# Einstellungen für FATI Generator
+
+#AutoCloseTerminal=true
+OpenWordDocument=true

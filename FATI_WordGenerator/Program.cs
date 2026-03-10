@@ -1,24 +1,16 @@
 ﻿using FATI_WordGenerator.Services;
 using System.ComponentModel;
 using System.Diagnostics;
+using FATI_WordGenerator;
 
 class Program
 {
     static void Main()
     {
+        var settings = Settings.LoadSettings();
         bool errorOccurred = false; //True when exception is thrown
         var sw = Stopwatch.StartNew(); //Start measuring time for loading bar
-
-        Console.CursorVisible = false;
-        Console.SetWindowSize(120, 30);
-        WriteColored(@"
-███████╗ █████╗ ████████╗██╗    ███████╗████████╗███████╗██╗███╗   ██╗███╗   ███╗███████╗████████╗███████╗
-██╔════╝██╔══██╗╚══██╔══╝██║    ██╔════╝╚══██╔══╝██╔════╝██║████╗  ██║████╗ ████║██╔════╝╚══██╔══╝╚══███╔╝
-█████╗  ███████║   ██║   ██║    ███████╗   ██║   █████╗  ██║██╔██╗ ██║██╔████╔██║█████╗     ██║     ███╔╝ 
-██╔══╝  ██╔══██║   ██║   ██║    ╚════██║   ██║   ██╔══╝  ██║██║╚██╗██║██║╚██╔╝██║██╔══╝     ██║    ███╔╝  
-██║     ██║  ██║   ██║   ██║    ███████║   ██║   ███████╗██║██║ ╚████║██║ ╚═╝ ██║███████╗   ██║   ███████╗
-╚═╝     ╚═╝  ╚═╝   ╚═╝   ╚═╝    ╚══════╝   ╚═╝   ╚══════╝╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝╚══════╝   ╚═╝   ╚══════╝
-", ConsoleColor.Cyan);
+        ConsoleFormattingAndBanner();
 
         try
         {
@@ -33,15 +25,13 @@ class Program
 
             WriteColored($"Rechnung erstellt: {invoiceService.FileName}", ConsoleColor.Green);
             WriteColored($"\nDateipfad: {outputPath}", ConsoleColor.Cyan);
-
-            Console.WriteLine("\nNeue Rechnung wird geöffnet...");
-            Process.Start(new ProcessStartInfo
+            
+            if (settings.OpenWordDocument)
             {
-                FileName = outputPath,
-                UseShellExecute = true
-            });
-            WriteColored("Done", ConsoleColor.Green);
-
+                Console.WriteLine("\nNeue Rechnung wird geöffnet...");
+                Process.Start(new ProcessStartInfo(outputPath) { UseShellExecute = true });
+                WriteColored("Done", ConsoleColor.Green);
+            }
         }
         catch (Exception ex)
         {
@@ -88,7 +78,7 @@ class Program
         }
         finally
         {
-            if (errorOccurred || Debugger.IsAttached)
+            if (errorOccurred || Debugger.IsAttached || !settings.AutoCloseTerminal)
             {
                 Console.WriteLine($"\nFertig in {sw.ElapsedMilliseconds} ms");
                 Console.WriteLine("Beliebige Taste pressen um Programm zu schließen...");
@@ -132,5 +122,19 @@ class Program
 
         if (step == totalSteps)
             Console.WriteLine();
+    }
+
+    static void ConsoleFormattingAndBanner()
+    {
+        Console.CursorVisible = false;
+        Console.SetWindowSize(120, 30);
+        WriteColored(@"
+███████╗ █████╗ ████████╗██╗    ███████╗████████╗███████╗██╗███╗   ██╗███╗   ███╗███████╗████████╗███████╗
+██╔════╝██╔══██╗╚══██╔══╝██║    ██╔════╝╚══██╔══╝██╔════╝██║████╗  ██║████╗ ████║██╔════╝╚══██╔══╝╚══███╔╝
+█████╗  ███████║   ██║   ██║    ███████╗   ██║   █████╗  ██║██╔██╗ ██║██╔████╔██║█████╗     ██║     ███╔╝ 
+██╔══╝  ██╔══██║   ██║   ██║    ╚════██║   ██║   ██╔══╝  ██║██║╚██╗██║██║╚██╔╝██║██╔══╝     ██║    ███╔╝  
+██║     ██║  ██║   ██║   ██║    ███████║   ██║   ███████╗██║██║ ╚████║██║ ╚═╝ ██║███████╗   ██║   ███████╗
+╚═╝     ╚═╝  ╚═╝   ╚═╝   ╚═╝    ╚══════╝   ╚═╝   ╚══════╝╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝╚══════╝   ╚═╝   ╚══════╝
+", ConsoleColor.Cyan);
     }
 }
