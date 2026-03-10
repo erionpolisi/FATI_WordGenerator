@@ -8,12 +8,12 @@ namespace FATI_WordGenerator.Domain
 {
     public class Company
     {
-        public string Name { get; set; }
-        public string Street { get; set; }
-        public string Number { get; set; }
-        public string PLZ { get; set; }
-        public string City { get; set; }
-        public string ATU { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Street { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
+        public string PLZ { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string ATU { get; set; } = string.Empty;
 
         public string StreetAndNumber { get; set; } = string.Empty;
         public string PLZAndCity { get; set; } = string.Empty;
