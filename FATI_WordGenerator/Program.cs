@@ -30,8 +30,7 @@ class Program
             Console.WriteLine("\nNeue Rechnung wird geöffnet...");
             Process.Start(new ProcessStartInfo
             {
-                FileName = "explorer",
-                Arguments = $"/select,\"{outputPath}\"",
+                FileName = outputPath,
                 UseShellExecute = true
             });
             WriteColored("Done", ConsoleColor.Green);
