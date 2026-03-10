@@ -1,64 +1,82 @@
 ﻿using FATI_WordGenerator.Services;
+using System.ComponentModel;
+using System.Diagnostics;
 
 class Program
 {
     static void Main()
     {
-        Console.ResetColor();
+        bool errorOccurred = false;
 
         try
         {
             var invoiceService = new InvoiceService();
 
-            string outputPath = invoiceService.Generate(); // Generate the invoice and get the output path
+            string outputPath = invoiceService.Generate();
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Rechnung erstellt: {invoiceService.FileName}");
-            Console.ResetColor();
-            Console.WriteLine($"\nDateipfad: {outputPath}\n");
-            
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = outputPath,
-                UseShellExecute = true
-            });
-        }
-        catch (ArgumentException e)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(e.Message);
-            Console.ResetColor();
-        }
-        catch (IOException e)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            WriteColored($"Rechnung erstellt: {invoiceService.FileName}", ConsoleColor.Green);
+            WriteColored($"\nDateipfad: {outputPath}\n", ConsoleColor.Cyan);
 
-            if (e.Message.Contains("Input.xlsx"))
-            {
-                Console.WriteLine("Bitte Excel schließen");
-            }
-            else if (e.Message.Contains("RechnungTemplate.docx"))
-            {
-                Console.WriteLine("Bitte Word schließen");
-            }
-            else
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            Console.ResetColor();
+            Process.Start(new ProcessStartInfo(outputPath) { UseShellExecute = true });
         }
         catch (Exception ex)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(ex.Message);
-            Console.ResetColor();
+            errorOccurred = true;
+
+            switch (ex)
+            {
+                case IOException ioEx when ioEx.Message.Contains("Input.xlsx"):
+                    WriteColored("Bitte Excel schließen", ConsoleColor.Yellow);
+                    break;
+
+                case IOException ioEx when ioEx.Message.Contains("RechnungTemplate.docx"):
+                    WriteColored("Bitte Word schließen", ConsoleColor.Yellow);
+                    break;
+
+                case IOException:
+                    WriteColored(ex.Message, ConsoleColor.Red);
+                    break;
+
+                case ArgumentException:
+                    WriteColored(ex.Message, ConsoleColor.Red);
+                    break;
+
+                case UnauthorizedAccessException:
+                    WriteColored("Schreibrechte fehlen", ConsoleColor.Red);
+                    break;
+
+                case FormatException:
+                    WriteColored($"Falsches Format: {ex.Source}", ConsoleColor.Red);
+                    break;
+
+                case NullReferenceException:
+                    WriteColored($"{ex.Message}: {ex.Source}", ConsoleColor.Red);
+                    break;
+
+                case Win32Exception:
+                    WriteColored("Datei kann nicht geöffnet werden", ConsoleColor.Red);
+                    break;
+
+                default:
+                    WriteColored(ex.Message, ConsoleColor.Red);
+                    break;
+            }
         }
         finally
         {
-            Console.WriteLine("Beliebige Taste pressen um Programm zu schließen...");
-            Console.ReadKey();
+            if (errorOccurred || Debugger.IsAttached)
+            {
+                Console.WriteLine("Beliebige Taste pressen um Programm zu schließen...");
+                Console.ReadKey();
+            }
         }
+    }
+
+    static void WriteColored(string text, ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+        Console.WriteLine(text);
+        Console.ResetColor();
     }
 
     public enum Months
