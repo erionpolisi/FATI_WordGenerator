@@ -10,12 +10,13 @@ class Program
         {
             var invoiceService = new InvoiceService();
 
-            string outputPath = invoiceService.Generate();
+            string outputPath = invoiceService.Generate(); // Generate the invoice and get the output path
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Rechnung erstellt: {outputPath}");
+            Console.WriteLine($"Rechnung erstellt: {invoiceService.FileName}");
             Console.ResetColor();
-
+            Console.WriteLine($"\nDateipfad: {outputPath}\n");
+            
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
                 FileName = outputPath,
@@ -55,7 +56,7 @@ class Program
         }
         finally
         {
-            Console.WriteLine("Press to close Console");
+            Console.WriteLine("Beliebige Taste pressen um Programm zu schließen...");
             Console.ReadKey();
         }
     }

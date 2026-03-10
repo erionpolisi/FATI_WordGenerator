@@ -10,9 +10,10 @@ namespace FATI_WordGenerator.Domain
 {
     public class Invoice
     {
-        public string Address { get; set; }
-        public string Period { get; set; }
-        public Company Company { get; set; }
+        public string? Details { get; set; }
+        public string Address { get; set; } = string.Empty;
+        public string Period { get; set; } = string.Empty;
+        public Company Company { get; set; } = new();
         public List<InvoicePosition> Positions { get; set; } = new();
 
         public double Sum => Positions.Sum(p => p.Total);

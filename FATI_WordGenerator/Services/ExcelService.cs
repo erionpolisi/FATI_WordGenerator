@@ -26,6 +26,15 @@ namespace FATI_WordGenerator.Services
                 invoice.Period = GetPeriod(wsAdresse);
                 invoice.Company = GetCompany(wsFirma);
                 invoice.Positions = ReadPositions(wsPos);
+                invoice.Details = GetDetails(wsPos); //Details is included in the position sheet, because it is needed for the invoice template and should be easily editable by the user in the Excel file
+
+                if (invoice == null)
+                {
+                    throw new ArgumentNullException("Es wurden keine Daten gefunden. Bitte füllen Sie die Excel Datei aus.");
+                }
+
+                if (invoice.Positions == null || invoice.Positions.Count == 0)
+                    throw new ArgumentException("Es wurden keine Positionen gefunden. Bitte füllen Sie die Positionen Tabelle in der Excel Datei aus.");
 
                 return invoice;
 
@@ -99,6 +108,7 @@ namespace FATI_WordGenerator.Services
 
             return company;
         }
+
         private List<InvoicePosition> ReadPositions(IXLWorksheet wsPos)
         {
             var positions = new List<InvoicePosition>();
@@ -127,6 +137,11 @@ namespace FATI_WordGenerator.Services
             }
 
             return positions;
+        }
+
+        private string? GetDetails(IXLWorksheet wsPos)
+        {
+            return wsPos.Cell(2, 5).GetString();
         }
     }
 }

@@ -14,7 +14,7 @@ namespace FATI_WordGenerator.Services
 {
     public class WordService
     {
-        public WordprocessingDocument Generate(string outputPath, Invoice invoice, int increment) 
+        public void Generate(string outputPath, Invoice invoice, int increment) 
         {
             try
             {
@@ -22,12 +22,11 @@ namespace FATI_WordGenerator.Services
                 Console.WriteLine("Neue Rechnung geöffnet...");
 
                 var body = doc.MainDocumentPart?.Document?.Body
-                 ?? throw new Exception("Word Dokument hat keinen Body");
+                 ?? throw new NullReferenceException("Word Dokument hat keinen Body");
 
                 ReplaceText(body, invoice, increment);
 
                 doc.MainDocumentPart.Document.Save();
-                return doc;
             }
             catch (Exception ex)
             {
@@ -52,17 +51,42 @@ namespace FATI_WordGenerator.Services
                 .FirstOrDefault(t => t.Text.Contains(placeholder));
 
             if (textElement == null)
-                throw new Exception($"Placeholder {placeholder} nicht im Word Dokument gefunden.");
+                throw new NullReferenceException($"Placeholder {placeholder} nicht im Word Dokument gefunden.");
 
             var parent = textElement.Parent
-                ?? throw new Exception("TextElement hat kein Parent.");
+                ?? throw new NullReferenceException("TextElement hat kein Parent.");
 
             var grandParent = parent.Parent
-                ?? throw new Exception("Parent hat kein Parent.");
+                ?? throw new NullReferenceException("Parent hat kein Parent.");
 
             textElement.Text = textElement.Text.Replace(placeholder, "");
 
             grandParent.InsertAfter(table, parent);
+        }
+
+        private void InsertTableDetails(W.Body body, string? details)
+        {
+            if (string.IsNullOrWhiteSpace(details))
+                return;
+
+            var paragraph = new W.Paragraph(
+                new W.ParagraphProperties(
+                    new W.Justification() { Val = W.JustificationValues.Center }
+                ),
+                new W.Run(
+                    new W.RunProperties(
+                        new W.Bold(),
+                        new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+                    ),
+                    new W.Text(details)
+                )
+            );
+
+            body.InsertBefore(
+                paragraph,
+                body.Descendants<W.Paragraph>()
+                    .First(p => p.InnerText.Contains("{TABELLE}"))
+            );
         }
 
         static void InsertWarningText(W.Body body)
@@ -83,7 +107,41 @@ namespace FATI_WordGenerator.Services
 
         private void CreateTable(W.Body body, Invoice invoice)
         {
-            W.Table table = new W.Table();
+            W.Table table = new W.Table(
+                new W.TableProperties(
+
+                    new W.TableJustification()
+                    {
+                       Val = W.TableRowAlignmentValues.Center
+                    },
+
+                    new W.TableWidth()
+                    {
+                        Width = "5000",
+                        Type = W.TableWidthUnitValues.Pct
+                    },
+
+                    new W.TableBorders(
+                        new W.TopBorder { Val = W.BorderValues.Nil },
+                        new W.BottomBorder { Val = W.BorderValues.Nil },
+                        new W.LeftBorder { Val = W.BorderValues.Nil },
+                        new W.RightBorder { Val = W.BorderValues.Nil },
+                        new W.InsideHorizontalBorder { Val = W.BorderValues.Nil },
+                        new W.InsideVerticalBorder { Val = W.BorderValues.Nil }
+                    )
+                )
+            );
+
+            var header = new W.TableRow(
+
+                CreateHeaderCell("Position"),
+                CreateHeaderCell("Menge"),
+                CreateHeaderCell("Bezeichnung"),
+                CreateHeaderCell("Einzelpreis"),
+                CreateHeaderCell("Gesamtpreis")
+            );
+
+            table.Append(header);
 
             int pos = 1;
 
@@ -117,8 +175,30 @@ namespace FATI_WordGenerator.Services
             InsertTableAtPlaceholder(body, "{TABELLE}", table);
         }
 
+        private static W.TableCell CreateHeaderCell(string text)
+        {
+            return new W.TableCell(
+                new W.TableCellProperties(
+                    new W.TableCellBorders(
+                        new W.BottomBorder { Val = W.BorderValues.Single, Size = 8 }
+                    )
+                ),
+                new W.Paragraph(
+                    new W.Run(
+                        new W.RunProperties(
+                            new W.Bold(),
+                            new W.RunFonts { Ascii = "Arial", HighAnsi = "Arial" }
+                        ),
+                        new W.Text(text)
+                    )
+                )
+            );
+        }
+
         private void ReplaceText(W.Body body, Invoice invoice, int increment)
         {
+            InsertTableDetails(body, invoice.Details);
+
             string date = DateTime.Now.ToString("dd. MMMM yyyy");
             string year = DateTime.Now.Year.ToString();
 

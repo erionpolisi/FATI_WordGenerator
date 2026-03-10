@@ -17,6 +17,7 @@ namespace FATI_WordGenerator.Services
         private readonly WordService _wordService = new();
 
         public readonly int _year = DateTime.Now.Year;
+        public string FileName { get; private set; } = string.Empty;
 
         public int Increment { get; private set; }
 
@@ -52,8 +53,8 @@ namespace FATI_WordGenerator.Services
         {
             try
             {
-                string filename = $"{Increment}_{_year}_{invoice.Company.Name}_{invoice.Company.Street} {invoice.Company.Number}.docx";
-                string outputPath = Path.Combine(_paths.InvoiceFolder, filename);
+                FileName = $"{Increment}_{_year}_{invoice.Company.Name}_{invoice.Company.Street} {invoice.Company.Number}.docx";
+                string outputPath = Path.Combine(_paths.InvoiceFolder, FileName);
                 string templatePath = Path.Combine(_paths.ResourcesPath, "RechnungTemplate.docx");
                 File.Copy(templatePath, outputPath, true);
 
@@ -61,7 +62,7 @@ namespace FATI_WordGenerator.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message, "Couldn't copy Template to TargetFolder");
+                Console.WriteLine($"Template konnte nicht kopiert werden: {ex.Message}");
                 return string.Empty;
             }
         }
