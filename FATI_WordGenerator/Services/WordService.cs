@@ -19,7 +19,6 @@ namespace FATI_WordGenerator.Services
             try
             {
                 using var doc = WordprocessingDocument.Open(outputPath, true);
-                Console.WriteLine("Neue Rechnung geöffnet...");
 
                 var body = doc.MainDocumentPart?.Document?.Body
                  ?? throw new NullReferenceException("Word Dokument hat keinen Body");

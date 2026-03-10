@@ -21,23 +21,26 @@ namespace FATI_WordGenerator.Services
 
         public int Increment { get; private set; }
 
-        internal string Generate()
+        internal string Generate(Action<int, string> progress)
         {
             try
             {
+                progress(1, "Excel wird gelesen...");
                 var invoice = _excelService.ReadInvoice(_paths.InputExcelPath);
 
+                progress(2, "Rechnungsnummer wird berechnet...");
                 Increment = GetInkrement(invoice);
 
+                progress(3, "Word Template wird kopiert...");
                 var outputPath = CopyTemplate(invoice);
 
+                progress(4, "Word Dokument wird generiert...");
                 _wordService.Generate(outputPath, invoice, Increment);
 
                 return outputPath;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Fehler beim Erstellen der Rechnung: {ex.Message}");
                 throw;
             }
         }
