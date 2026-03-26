@@ -2,6 +2,7 @@
 using FATI_WordGenerator.Domain;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,18 +31,18 @@ namespace FATI_WordGenerator.Services
 
                 if (invoice == null)
                 {
-                    throw new ArgumentNullException("Es wurden keine Daten gefunden. Bitte füllen Sie die Excel Datei aus.");
+                    throw new ArgumentNullException("\nEs wurden keine Daten gefunden. Bitte füllen Sie die Excel Datei aus.");
                 }
 
                 if (invoice.Positions == null || invoice.Positions.Count == 0)
-                    throw new ArgumentException("Es wurden keine Positionen gefunden. Bitte füllen Sie die Positionen Tabelle in der Excel Datei aus.");
+                    throw new ArgumentException("\nEs wurden keine Positionen gefunden. Bitte füllen Sie die Positionen Tabelle in der Excel Datei aus.");
 
                 return invoice;
 
             }
             catch (Exception ex)
             {
-                throw new Exception("Fehler beim Lesen der Excel Datei.", ex);
+                throw new Exception($"\nFehler beim Lesen der Excel Datei: {ex.Message}", ex);
             }
         }
 
@@ -115,17 +116,17 @@ namespace FATI_WordGenerator.Services
 
             foreach (var row in wsPos.RowsUsed().Skip(1))
             {
-                if (!row.Cell(1).TryGetValue<int>(out int quantity))
+                if (IsEmptyPositionRow(row))
+                    continue;
+
+                if (!TryParseDecimal(row.Cell(1), out double quantity))
                     throw new ArgumentException($"Ungültige Menge in Zeile {row.RowNumber()}");
 
                 string unit = row.Cell(2).GetString();
                 string description = row.Cell(3).GetString();
 
-                if (!row.Cell(4).TryGetValue<double>(out double price))
-                {
-                    if (!double.TryParse(row.Cell(4).GetString(), out price))
-                        throw new ArgumentException($"Ungültiger Preis in Zeile {row.RowNumber()}");
-                }
+                if (!TryParseDecimal(row.Cell(4), out double price))
+                    throw new ArgumentException($"Ungültiger Preis in Zeile {row.RowNumber()}");
 
                 positions.Add(new InvoicePosition
                 {
@@ -137,6 +138,27 @@ namespace FATI_WordGenerator.Services
             }
 
             return positions;
+        }
+
+        private static bool IsEmptyPositionRow(IXLRow row)
+        {
+            return row.Cells(1, 4).All(cell => string.IsNullOrWhiteSpace(cell.GetString()));
+        }
+
+        private static bool TryParseDecimal(IXLCell cell, out double value)
+        {
+            if (cell.TryGetValue<double>(out value))
+                return true;
+
+            var rawValue = cell.GetString().Trim();
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                value = 0;
+                return false;
+            }
+
+            return double.TryParse(rawValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.GetCultureInfo("de-DE"), out value)
+                || double.TryParse(rawValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out value);
         }
 
         private string? GetDetails(IXLWorksheet wsPos)
