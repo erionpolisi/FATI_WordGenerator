@@ -38,7 +38,9 @@ namespace FATI_WordGenerator.Services
         {
             return new W.Run(
                 new W.RunProperties(
-                    new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+                    new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" },
+                    new W.FontSize() { Val = "22" },
+                    new W.FontSizeComplexScript() { Val = "22" }
                 ),
                 new W.Text(text)
             );
@@ -46,21 +48,33 @@ namespace FATI_WordGenerator.Services
 
         static void InsertTableAtPlaceholder(W.Body body, string placeholder, W.Table table)
         {
-            var textElement = body.Descendants<W.Text>()
-                .FirstOrDefault(t => t.Text.Contains(placeholder));
+            var placeholderParagraph = body.Descendants<W.Paragraph>()
+                .FirstOrDefault(p => p.InnerText.Contains(placeholder));
 
-            if (textElement == null)
+            if (placeholderParagraph == null)
                 throw new NullReferenceException($"Placeholder {placeholder} nicht im Word Dokument gefunden.");
 
-            var parent = textElement.Parent
-                ?? throw new NullReferenceException("TextElement hat kein Parent.");
+            foreach (var text in placeholderParagraph.Descendants<W.Text>())
+            {
+                if (text.Text.Contains(placeholder))
+                    text.Text = text.Text.Replace(placeholder, "");
+            }
 
-            var grandParent = parent.Parent
-                ?? throw new NullReferenceException("Parent hat kein Parent.");
+            body.InsertAfter(table, placeholderParagraph);
+            //RemoveFollowingEmptyParagraphs(placeholderParagraph);
+            placeholderParagraph.Remove();
+        }
 
-            textElement.Text = textElement.Text.Replace(placeholder, "");
+        private static void RemoveFollowingEmptyParagraphs(W.Paragraph startParagraph)
+        {
+            var next = startParagraph.NextSibling<W.Paragraph>();
 
-            grandParent.InsertAfter(table, parent);
+            while (next != null && string.IsNullOrWhiteSpace(next.InnerText))
+            {
+                var paragraphToRemove = next;
+                next = next.NextSibling<W.Paragraph>();
+                paragraphToRemove.Remove();
+            }
         }
 
         private void InsertTableDetails(W.Body body, string? details)
@@ -70,12 +84,15 @@ namespace FATI_WordGenerator.Services
 
             var paragraph = new W.Paragraph(
                 new W.ParagraphProperties(
-                    new W.Justification() { Val = W.JustificationValues.Center }
+                    new W.Justification() { Val = W.JustificationValues.Center },
+                    new W.SpacingBetweenLines() { Before = "0", After = "0", Line = "240", LineRule = W.LineSpacingRuleValues.Auto }
                 ),
                 new W.Run(
                     new W.RunProperties(
                         new W.Bold(),
-                        new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+                        new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" },
+                        new W.FontSize() { Val = "22" },
+                        new W.FontSizeComplexScript() { Val = "22" }
                     ),
                     new W.Text(details)
                 )
@@ -91,10 +108,15 @@ namespace FATI_WordGenerator.Services
         static void InsertWarningText(W.Body body)
         {
             var paragraph = new W.Paragraph(
+                new W.ParagraphProperties(
+                    new W.SpacingBetweenLines() { Before = "0", After = "0", Line = "240", LineRule = W.LineSpacingRuleValues.Auto }
+                ),
                 new W.Run(
                     new W.RunProperties(
                         new W.Bold(),
-                        new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" }
+                        new W.RunFonts() { Ascii = "Arial", HighAnsi = "Arial" },
+                        new W.FontSize() { Val = "22" },
+                        new W.FontSizeComplexScript() { Val = "22" }
                     ),
                     new W.Text("ACHTUNG: Wir möchten auf unsere neue Bankverbindung hinweisen!!!")
                 )
@@ -108,18 +130,21 @@ namespace FATI_WordGenerator.Services
         {
             W.Table table = new W.Table(
                 new W.TableProperties(
-
                     new W.TableJustification()
                     {
                        Val = W.TableRowAlignmentValues.Center
                     },
-
                     new W.TableWidth()
                     {
                         Width = "5000",
                         Type = W.TableWidthUnitValues.Pct
                     },
-
+                    new W.TableCellMarginDefault(
+                        new W.TopMargin { Width = "0", Type = W.TableWidthUnitValues.Dxa },
+                        new W.BottomMargin { Width = "0", Type = W.TableWidthUnitValues.Dxa },
+                        new W.TableCellLeftMargin { Width = 40, Type = W.TableWidthValues.Dxa },
+                        new W.TableCellRightMargin { Width = 40, Type = W.TableWidthValues.Dxa }
+                    ),
                     new W.TableBorders(
                         new W.TopBorder { Val = W.BorderValues.Nil },
                         new W.BottomBorder { Val = W.BorderValues.Nil },
@@ -147,23 +172,22 @@ namespace FATI_WordGenerator.Services
             foreach (var p in invoice.Positions)
             {
                 var tr = new W.TableRow(
-
-                    new W.TableCell(new W.Paragraph(CreateRun($"{pos}"))),
+                    new W.TableCell(CreateCompactParagraph($"{pos}")),
 
                     new W.TableCell(
-                        new W.Paragraph(CreateRun($"{p.Quantity} {p.Unit}"))
+                        CreateCompactParagraph($"{p.Quantity:0.00} {p.Unit}")
                     ),
 
                     new W.TableCell(
-                        new W.Paragraph(CreateRun(p.Description))
+                        CreateCompactParagraph(p.Description)
                     ),
 
                     new W.TableCell(
-                        new W.Paragraph(CreateRun($"{p.Price:N2} €"))
+                        CreateRightAlignedParagraph($"{p.Price:N2} €")
                     ),
 
                     new W.TableCell(
-                        new W.Paragraph(CreateRun($"{p.Total:N2} €"))
+                        CreateRightAlignedParagraph($"{p.Total:N2} €")
                     )
                 );
 
@@ -172,6 +196,23 @@ namespace FATI_WordGenerator.Services
             }
 
             InsertTableAtPlaceholder(body, "{TABELLE}", table);
+        }
+
+        private static W.Paragraph CreateRightAlignedParagraph(string text)
+        {
+            return new W.Paragraph(
+                new W.ParagraphProperties(
+                    new W.Justification() { Val = W.JustificationValues.Right },
+                    new W.SpacingBetweenLines()
+                    {
+                        Before = "0",
+                        After = "0",
+                        Line = "240",
+                        LineRule = W.LineSpacingRuleValues.Auto
+                    }
+                ),
+                CreateRun(text)
+            );
         }
 
         private static W.TableCell CreateHeaderCell(string text)
@@ -183,14 +224,29 @@ namespace FATI_WordGenerator.Services
                     )
                 ),
                 new W.Paragraph(
+                    new W.ParagraphProperties(
+                        new W.SpacingBetweenLines() { Before = "0", After = "0", Line = "240", LineRule = W.LineSpacingRuleValues.Auto }
+                    ),
                     new W.Run(
                         new W.RunProperties(
                             new W.Bold(),
-                            new W.RunFonts { Ascii = "Arial", HighAnsi = "Arial" }
+                            new W.RunFonts { Ascii = "Arial", HighAnsi = "Arial" },
+                            new W.FontSize() { Val = "22" },
+                            new W.FontSizeComplexScript() { Val = "22" }
                         ),
                         new W.Text(text)
                     )
                 )
+            );
+        }
+
+        private static W.Paragraph CreateCompactParagraph(string text)
+        {
+            return new W.Paragraph(
+                new W.ParagraphProperties(
+                    new W.SpacingBetweenLines() { Before = "0", After = "0", Line = "240", LineRule = W.LineSpacingRuleValues.Auto }
+                ),
+                CreateRun(text)
             );
         }
 
@@ -216,7 +272,20 @@ namespace FATI_WordGenerator.Services
             ReplaceText(body, "{GESAMTSUMME}", $"{invoice.Total:N2} €");
 
             CreateTable(body, invoice);
+            CompactSectionLayout(body);
             InsertWarningText(body);
+        }
+
+        private static void CompactSectionLayout(W.Body body)
+        {
+            var sectionProperties = body.GetFirstChild<W.SectionProperties>();
+            var pageMargin = sectionProperties?.GetFirstChild<W.PageMargin>();
+
+            if (pageMargin == null)
+                return;
+
+            pageMargin.Top = 1000;
+            pageMargin.Bottom = 850;
         }
 
         static void ReplaceText(W.Body body, string placeholder, string newValue)
