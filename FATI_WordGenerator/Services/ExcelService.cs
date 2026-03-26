@@ -120,7 +120,7 @@ namespace FATI_WordGenerator.Services
                     continue;
 
                 if (!TryParseDecimal(row.Cell(1), out double quantity))
-                    throw new ArgumentException($"Ungültige Menge in Zeile {row.RowNumber()}");
+                    return positions;
 
                 string unit = row.Cell(2).GetString();
                 string description = row.Cell(3).GetString();
