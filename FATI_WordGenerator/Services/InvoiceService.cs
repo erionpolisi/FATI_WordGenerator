@@ -58,7 +58,10 @@ namespace FATI_WordGenerator.Services
         {
             try
             {
-                FileName = $"{Increment:D3}_{_year}_{invoice.Company.Name}_{invoice.Company.Street} {invoice.Company.Number}.docx";
+                FileName = $"{Increment:D3}_{_year}_" +
+                           $"{Clean(invoice.Company.Name)}_" +
+                           $"{Clean(invoice.Company.Street)} {Clean(invoice.Company.Number)}.docx";
+
                 string outputPath = Path.Combine(_paths.InvoiceFolder, FileName);
                 string templatePath = Path.Combine(_paths.ResourcesPath, "RechnungTemplate.docx");
                 File.Copy(templatePath, outputPath, true);
@@ -70,6 +73,19 @@ namespace FATI_WordGenerator.Services
                 Console.WriteLine($"Template konnte nicht kopiert werden: {ex.Message}");
                 return string.Empty;
             }
+        }
+
+        private string Clean(string input) //Against InvalidFileNameChars (e.g. `/´)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            foreach (var c in Path.GetInvalidFileNameChars())
+            {
+                input = input.Replace(c, ' ');
+            }
+
+            return input.Trim();
         }
     }
 }
