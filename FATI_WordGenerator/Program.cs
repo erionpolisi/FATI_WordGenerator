@@ -5,6 +5,7 @@ using FATI_WordGenerator;
 
 class Program
 {
+    [STAThread]
     static void Main()
     {
         var settings = Settings.LoadSettings();
@@ -14,7 +15,7 @@ class Program
 
         try
         {
-            var invoiceService = new InvoiceService();
+            var invoiceService = new InvoiceService(settings);
 
             int totalSteps = 4;// Excel lesen, RN berechnen, Template kopieren, Word generieren
             string outputPath = invoiceService.Generate((step, message) =>

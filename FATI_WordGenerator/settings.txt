@@ -1,4 +1,6 @@
-# Einstellungen für FATI Generator
+# Einstellungen fÃ¼r FATI Generator
 
-#AutoCloseTerminal=true
-OpenWordDocument=true
+AutoCloseTerminal=False
+OpenWordDocument=True
+ChangePath=True
+InvoiceFolderPath=D:\FATI Stein & Pflasterungen\Rechnungen 2026

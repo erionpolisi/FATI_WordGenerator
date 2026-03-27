@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FATI_WordGenerator
+﻿namespace FATI_WordGenerator
 {
     public class Settings
     {
         public bool AutoCloseTerminal { get; set; } = false;
         public bool OpenWordDocument { get; set; } = false;
+        public bool ChangePath { get; set; } = false;
+        public string InvoiceFolderPath { get; set; } = string.Empty;
 
         static public Settings LoadSettings()
         {
@@ -40,31 +36,77 @@ namespace FATI_WordGenerator
                 if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line))
                     continue;
 
-                var parts = line.Split('=');
+                var parts = line.Split('=', 2);
 
                 if (parts.Length != 2)
                     continue;
 
-                bool value = bool.Parse(parts[1].Trim());
+                var key = parts[0].Trim();
+                var rawValue = parts[1].Trim();
 
-                if (isDebug)
-                {
-                    Console.WriteLine($"Einstellung geladen: {parts[0].Trim()} = {value}");
-                }
-
-                switch (parts[0].Trim())
+                switch (key)
                 {
                     case "AutoCloseTerminal":
-                        settings.AutoCloseTerminal = value;
+                        if (bool.TryParse(rawValue, out var autoClose))
+                            settings.AutoCloseTerminal = autoClose;
                         break;
 
                     case "OpenWordDocument":
-                        settings.OpenWordDocument = value;
+                        if (bool.TryParse(rawValue, out var openWord))
+                            settings.OpenWordDocument = openWord;
                         break;
+
+                    case "ChangePath":
+                        if (bool.TryParse(rawValue, out var changePath))
+                            settings.ChangePath = changePath;
+                        break;
+
+                    case "InvoiceFolderPath":
+                        settings.InvoiceFolderPath = rawValue;
+                        break;
+
+                    default:
+                        if (isDebug)
+                        {
+                            Console.WriteLine($"Unbekannte Einstellung: {key}");
+                        }
+                        break;
+                }
+
+                if (isDebug)
+                {
+                    Console.WriteLine($"Einstellung geladen: {key} = {rawValue}");
                 }
             }
 
             return settings;
+        }
+
+        public static void SaveSettings(Settings settings)
+        {
+            string path;
+
+#if DEBUG
+            path = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\settings.txt");
+#else
+    path = Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory,
+        "settings.txt");
+#endif
+
+            var lines = new List<string>
+            {
+                "# Einstellungen für FATI Generator",
+                "",
+                $"AutoCloseTerminal={settings.AutoCloseTerminal}",
+                $"OpenWordDocument={settings.OpenWordDocument}",
+                $"ChangePath={settings.ChangePath}",
+                $"InvoiceFolderPath={settings.InvoiceFolderPath}"
+            };
+
+            File.WriteAllLines(path, lines);
         }
     }
 
