@@ -10,18 +10,11 @@
         static public Settings LoadSettings()
         {
             var settings = new Settings();
-            string path = "";
+            string path = GetSettingsFilePath();
             bool isDebug = false;
 
 #if DEBUG
-            path = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                @"..\..\..\settings.txt");
             isDebug = true;
-#else
-            path = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "settings.txt");
 #endif
 
             if (!File.Exists(path))
@@ -84,17 +77,7 @@
 
         public static void SaveSettings(Settings settings)
         {
-            string path;
-
-#if DEBUG
-            path = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                @"..\..\..\settings.txt");
-#else
-    path = Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory,
-        "settings.txt");
-#endif
+            string path = GetSettingsFilePath();
 
             var lines = new List<string>
             {
@@ -107,6 +90,24 @@
             };
 
             File.WriteAllLines(path, lines);
+        }
+
+        public static void ResetSettings()
+        {
+            SaveSettings(new Settings());
+        }
+
+        public static string GetSettingsFilePath()
+        {
+#if DEBUG
+            return Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                @"..\..\..\settings.txt");
+#else
+            return Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "settings.txt");
+#endif
         }
     }
 

@@ -5,13 +5,35 @@ using FATI_WordGenerator;
 
 class Program
 {
+    enum StartupAction
+    {
+        Start,
+        ResetSettings,
+        Exit
+    }
+
     [STAThread]
     static void Main()
     {
-        var settings = Settings.LoadSettings();
         bool errorOccurred = false; //True when exception is thrown
         var sw = Stopwatch.StartNew(); //Start measuring time for loading bar
         ConsoleFormattingAndBanner();
+
+        var startupAction = ShowStartupMenu();
+
+        if (startupAction == StartupAction.Exit)
+        {
+            return;
+        }
+
+        if (startupAction == StartupAction.ResetSettings)
+        {
+            Settings.ResetSettings();
+            WriteColored("Settings wurden auf Standardwerte zurückgesetzt.", ConsoleColor.Green);
+            Console.WriteLine();
+        }
+
+        var settings = Settings.LoadSettings();
 
         try
         {
@@ -84,6 +106,30 @@ class Program
                 Console.WriteLine($"\nFertig in {sw.ElapsedMilliseconds} ms");
                 Console.WriteLine("Beliebige Taste pressen um Programm zu schließen...");
                 Console.ReadKey();
+            }
+        }
+    }
+
+    static StartupAction ShowStartupMenu()
+    {
+        WriteColored("Enter = Starten | R = Settings resetten | Esc = Beenden", ConsoleColor.Yellow);
+
+        while (true)
+        {
+            var key = Console.ReadKey(intercept: true).Key;
+
+            switch (key)
+            {
+                case ConsoleKey.Enter:
+                    Console.WriteLine();
+                    return StartupAction.Start;
+
+                case ConsoleKey.R:
+                    Console.WriteLine();
+                    return StartupAction.ResetSettings;
+
+                case ConsoleKey.Escape:
+                    return StartupAction.Exit;
             }
         }
     }
