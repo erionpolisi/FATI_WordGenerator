@@ -1,7 +1,7 @@
 # Einstellungen für FATI Generator
 
-AutoCloseTerminal=False
+AutoCloseTerminal=True
 OpenWordDocument=True
-CalculateSkonto=False
-ChangePath=True
+CalculateSkonto=False #Auf True wird Skonto berechnet und hinzugefügt
+ChangePath=False #InvoiceFolderPath wird gewählt => Wenn leer wird ausgesucht
 InvoiceFolderPath=C:\Users\polise\Documents
