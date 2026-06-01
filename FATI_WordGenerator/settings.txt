@@ -2,5 +2,6 @@
 
 AutoCloseTerminal=False
 OpenWordDocument=True
+CalculateSkonto=False
 ChangePath=True
 InvoiceFolderPath=C:\Users\polise\Documents
