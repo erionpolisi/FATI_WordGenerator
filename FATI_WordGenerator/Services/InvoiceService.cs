@@ -22,7 +22,7 @@ namespace FATI_WordGenerator.Services
                 var invoice = _excelService.ReadInvoice(_paths.InputExcelPath);
 
                 progress(2, "Rechnungsnummer wird berechnet...");
-                Increment = GetInkrement(invoice);
+                Increment = GetIncrement(invoice);
 
                 progress(3, "Word Template wird kopiert...");
                 var outputPath = CopyTemplate(invoice);
@@ -45,7 +45,7 @@ namespace FATI_WordGenerator.Services
                 .Length + 1;
         }
 
-        private int GetInkrement(Invoice invoice)
+        private int GetIncrement(Invoice invoice)
         {
             var count = Directory
                 .EnumerateFiles(_paths.InvoiceFolder, "*.docx")
