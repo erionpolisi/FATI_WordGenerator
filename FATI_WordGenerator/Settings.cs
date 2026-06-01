@@ -5,6 +5,7 @@
         public bool AutoCloseTerminal { get; set; } = false;
         public bool OpenWordDocument { get; set; } = false;
         public bool ChangePath { get; set; } = false;
+        public bool CalculateSkonto { get; set; } = false;
         public string InvoiceFolderPath { get; set; } = string.Empty;
 
         static public Settings LoadSettings()
@@ -54,6 +55,11 @@
                     case "OpenWordDocument":
                         if (bool.TryParse(rawValue, out var openWord))
                             settings.OpenWordDocument = openWord;
+                        break;
+
+                    case "CalculateSkonto":
+                        if (bool.TryParse(rawValue, out var calculateSkonto))
+                            settings.CalculateSkonto = calculateSkonto;
                         break;
 
                     case "ChangePath":

@@ -3,4 +3,4 @@
 AutoCloseTerminal=False
 OpenWordDocument=True
 ChangePath=True
-InvoiceFolderPath=D:\FATI Stein & Pflasterungen\Rechnungen 2026
+InvoiceFolderPath=C:\Users\polise\Documents

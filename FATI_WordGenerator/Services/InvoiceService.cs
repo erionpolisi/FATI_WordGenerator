@@ -63,7 +63,18 @@ namespace FATI_WordGenerator.Services
                            $"{Clean(invoice.Company.Street)} {Clean(invoice.Company.Number)}.docx";
 
                 string outputPath = Path.Combine(_paths.InvoiceFolder, FileName);
-                string templatePath = Path.Combine(_paths.ResourcesPath, "RechnungTemplate.docx");
+
+                string templatePath = string.Empty;
+
+                if (settings.CalculateSkonto)
+                {
+                    templatePath = Path.Combine(_paths.ResourcesPath, "RechnungTemplate.docx");
+                }
+                else
+                {
+                    templatePath = Path.Combine(_paths.ResourcesPath, "RechnungTemplate2.docx");
+                }
+
                 File.Copy(templatePath, outputPath, true);
 
                 return outputPath;
